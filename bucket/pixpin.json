@@ -9,10 +9,7 @@
   "persist": [
     "Config",
     "Data",
-    "History",
-    "LocalStorage.data",
-    "LoginData",
-    "OcrModel"
+    "History"
   ],
   "shortcuts": [
     [

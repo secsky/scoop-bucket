@@ -42,7 +42,7 @@ $manifest = [ordered]@{
     url = $url
     hash = $hash
     extract_dir = "PixPin"
-    persist = @("Config", "Data", "History", "LocalStorage.data", "LoginData", "OcrModel")
+    persist = @("Config", "Data", "History")
     shortcuts = @(
         , @("PixPin.exe", "PixPin")
     )
