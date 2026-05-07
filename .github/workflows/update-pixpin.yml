@@ -1,0 +1,40 @@
+name: Update PixPin
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 18 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update manifest
+        shell: pwsh
+        run: ./scripts/Update-PixPin.ps1
+
+      - name: Validate manifest JSON
+        shell: pwsh
+        run: |
+          Get-Content ./bucket/pixpin.json -Raw | ConvertFrom-Json | Out-Null
+
+      - name: Commit changes
+        shell: pwsh
+        run: |
+          if (-not (git status --porcelain)) {
+            Write-Host "No PixPin update found."
+            exit 0
+          }
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bucket/pixpin.json
+          git commit -m "Update PixPin manifest"
+          git push
