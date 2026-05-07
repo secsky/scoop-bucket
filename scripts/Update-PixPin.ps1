@@ -43,7 +43,7 @@ $manifest = [ordered]@{
     hash = $hash
     extract_dir = "PixPin"
     shortcuts = @(
-        @("PixPin.exe", "PixPin")
+        , @("PixPin.exe", "PixPin")
     )
     checkver = [ordered]@{
         url = $DownloadPage

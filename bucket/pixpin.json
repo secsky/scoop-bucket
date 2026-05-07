@@ -7,8 +7,10 @@
   "hash": "1974429a678d213115f7aa2b95b9478caeb4370edf5d73d12db01735f6616065",
   "extract_dir": "PixPin",
   "shortcuts": [
-    "PixPin.exe",
-    "PixPin"
+    [
+      "PixPin.exe",
+      "PixPin"
+    ]
   ],
   "checkver": {
     "url": "https://pixpin.cn/download/",
