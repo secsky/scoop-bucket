@@ -1,22 +1,20 @@
 {
-    "version": "3.1.4.0",
-    "description": "A screenshot, pinboard, OCR, long screenshot, and annotation tool.",
-    "homepage": "https://pixpin.cn/",
-    "license": "Freeware",
-    "url": "https://download.pixpin.cn/PixPin_cn_zh-cn_3.1.4.0.zip",
-    "hash": "56f6284d1e6385f5f85c5e72c8fac3ae0d7aeb02d87057b16135a60eb62f31d0",
-    "extract_dir": "PixPin",
-    "shortcuts": [
-        [
-            "PixPin.exe",
-            "PixPin"
-        ]
-    ],
-    "checkver": {
-        "url": "https://pixpin.cn/download/",
-        "regex": "id=\"portable-download-link\"[^>]+href=\"https://download\\.pixpin\\.cn/PixPin_cn_zh-cn_([\\d.]+)\\.zip\""
-    },
-    "autoupdate": {
-        "url": "https://download.pixpin.cn/PixPin_cn_zh-cn_$version.zip"
-    }
+  "version": "3.1.4.0",
+  "description": "A screenshot, pinboard, OCR, long screenshot, and annotation tool.",
+  "homepage": "https://pixpin.cn/",
+  "license": "Freeware",
+  "url": "https://download.pixpin.cn/PixPin_cn_zh-cn_3.1.4.0.zip",
+  "hash": "1974429a678d213115f7aa2b95b9478caeb4370edf5d73d12db01735f6616065",
+  "extract_dir": "PixPin",
+  "shortcuts": [
+    "PixPin.exe",
+    "PixPin"
+  ],
+  "checkver": {
+    "url": "https://pixpin.cn/download/",
+    "regex": "id=\"portable-download-link\"[^>]+href=\"https://download\\.pixpin\\.cn/PixPin_cn_zh-cn_([\\d.]+)\\.zip\""
+  },
+  "autoupdate": {
+    "url": "https://download.pixpin.cn/PixPin_cn_zh-cn_$version.zip"
+  }
 }
