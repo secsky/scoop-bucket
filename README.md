@@ -5,7 +5,7 @@ Personal Scoop bucket.
 ## Usage
 
 ```powershell
-scoop bucket add scoop-bucket https://github.com/<owner>/<repo>
+scoop bucket add scoop-bucket https://github.com/secsky/scoop-bucket.git
 scoop install scoop-bucket/pixpin
 ```
 
