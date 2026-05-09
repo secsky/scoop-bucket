@@ -1,0 +1,59 @@
+name: Web Desktop Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-desktop:
+    runs-on: windows-latest
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Windows VNC and noVNC
+        env:
+          DESKTOP_PASSWORD: ${{ secrets.DESKTOP_PASSWORD }}
+        shell: powershell
+        run: |
+          if (-not $env:DESKTOP_PASSWORD) {
+            Write-Error "Please set DESKTOP_PASSWORD in repository secrets"
+            exit 1
+          }
+
+          Write-Host "Install TightVNC Server"
+          choco install tightvnc -y --install-arguments="'/quiet /norestart ADDLOCAL=Server SERVER_REGISTER_AS_SERVICE=1 SERVER_ADD_FIREWALL_EXCEPTION=1 SET_USEVNCAUTHENTICATION=1 VALUE_OF_USEVNCAUTHENTICATION=1 SET_PASSWORD=1 VALUE_OF_PASSWORD=$env:DESKTOP_PASSWORD SET_USECONTROLAUTHENTICATION=1 VALUE_OF_USECONTROLAUTHENTICATION=1 SET_CONTROLPASSWORD=1 VALUE_OF_CONTROLPASSWORD=$env:DESKTOP_PASSWORD'"
+
+          Start-Sleep -Seconds 10
+
+          Write-Host "Start TightVNC service"
+          Start-Service tvnserver -ErrorAction SilentlyContinue
+          Get-Service *vnc* | Format-Table -AutoSize
+
+          Write-Host "Install noVNC"
+          python -m pip install websockify
+          git clone --depth=1 https://github.com/novnc/noVNC.git
+
+          Write-Host "Start noVNC bridge on http://localhost:6080"
+          Start-Process -FilePath python -ArgumentList @(
+            "-m", "websockify",
+            "--web", "noVNC",
+            "6080",
+            "localhost:5900"
+          )
+
+          Start-Sleep -Seconds 5
+
+          Write-Host "Install cloudflared"
+          Invoke-WebRequest `
+            -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" `
+            -OutFile "cloudflared.exe"
+
+          Write-Host "Open the trycloudflare.com URL below"
+          Write-Host "Then open /vnc.html if needed"
+          Write-Host "VNC password: DESKTOP_PASSWORD"
+
+          .\cloudflared.exe tunnel --url http://localhost:6080

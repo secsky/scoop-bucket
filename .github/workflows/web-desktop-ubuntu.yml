@@ -1,0 +1,52 @@
+name: Web Desktop Ubuntu
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu-desktop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Ubuntu Web Desktop
+        env:
+          DESKTOP_PASSWORD: ${{ secrets.DESKTOP_PASSWORD }}
+        run: |
+          if [ -z "$DESKTOP_PASSWORD" ]; then
+            echo "::error::Please set DESKTOP_PASSWORD in repository secrets"
+            exit 1
+          fi
+
+          docker run -d \
+            --name webtop \
+            -e PUID=1000 \
+            -e PGID=1000 \
+            -e TZ=Asia/Shanghai \
+            -e CUSTOM_USER=admin \
+            -e PASSWORD="$DESKTOP_PASSWORD" \
+            -e TITLE="GitHub Actions Ubuntu Desktop" \
+            -e PIXELFLUX_WAYLAND=false \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -p 3001:3001 \
+            --shm-size="1gb" \
+            lscr.io/linuxserver/webtop:ubuntu-xfce
+
+          sleep 15
+          docker logs webtop --tail=80
+
+      - name: Expose Web Desktop
+        run: |
+          wget -qO cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared
+
+          echo "Open the trycloudflare.com URL below"
+          echo "Username: admin"
+          echo "Password: DESKTOP_PASSWORD"
+
+          ./cloudflared tunnel --url https://localhost:3001 --no-tls-verify

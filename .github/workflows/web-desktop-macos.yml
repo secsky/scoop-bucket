@@ -1,0 +1,58 @@
+name: Web Desktop macOS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-desktop:
+    runs-on: macos-13
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start macOS VNC and noVNC
+        env:
+          DESKTOP_PASSWORD: ${{ secrets.DESKTOP_PASSWORD }}
+        shell: bash
+        run: |
+          if [ -z "$DESKTOP_PASSWORD" ]; then
+            echo "::error::Please set DESKTOP_PASSWORD in repository secrets"
+            exit 1
+          fi
+
+          # Apple legacy VNC password is effectively limited; use first 8 chars.
+          VNC_PASSWORD="$(echo "$DESKTOP_PASSWORD" | cut -c1-8)"
+
+          echo "Enable macOS Remote Management / VNC"
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+            -activate \
+            -configure \
+            -access -on \
+            -allowAccessFor -allUsers \
+            -clientopts \
+            -setvnclegacy -vnclegacy yes \
+            -setvncpw -vncpw "$VNC_PASSWORD" \
+            -restart -agent
+
+          echo "Install noVNC"
+          python3 -m pip install --user websockify
+          git clone --depth=1 https://github.com/novnc/noVNC.git
+
+          echo "Start noVNC bridge on http://localhost:6080"
+          "$HOME/Library/Python/3.*/bin/websockify" --web ./noVNC 6080 localhost:5900 &
+          sleep 5
+
+          echo "Install cloudflared"
+          curl -L -o cloudflared.tgz https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64.tgz
+          tar -xzf cloudflared.tgz
+          chmod +x cloudflared
+
+          echo "Open the trycloudflare.com URL below"
+          echo "Then open /vnc.html if needed"
+          echo "VNC password: first 8 chars of DESKTOP_PASSWORD"
+
+          ./cloudflared tunnel --url http://localhost:6080
