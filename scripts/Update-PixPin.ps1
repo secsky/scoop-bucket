@@ -15,7 +15,7 @@ if (-not (Test-Path -LiteralPath $manifestFile)) {
 $response = Invoke-WebRequest -UseBasicParsing -Uri $DownloadPage
 $html = $response.Content
 
-$linkPattern = '<a\b[^>]*\bid="portable-download-link"[^>]*\bhref="(?<url>https://download\.pixpin\.cn/PixPin_cn_zh-cn_(?<version>[\d.]+)\.zip)"'
+$linkPattern = '<a\b[^>]*\bid="portable-download-link"[^>]*\bhref="(?<url>https://down(?:load)?\.pixpin\.cn/PixPin_win_(?<version>\d+(?:\.\d+)+)\.zip)"'
 $match = [regex]::Match($html, $linkPattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 
 if (-not $match.Success) {
@@ -23,9 +23,10 @@ if (-not $match.Success) {
 }
 
 $version = $match.Groups["version"].Value
-$url = $match.Groups["url"].Value
+# ponytail: use the existing official CDN while down.pixpin.cn has DNS failures.
+$url = $match.Groups["url"].Value.Replace('https://down.pixpin.cn/', 'https://download.pixpin.cn/')
 
-$tempFile = Join-Path ([System.IO.Path]::GetTempPath()) ("PixPin_cn_zh-cn_{0}.zip" -f $version)
+$tempFile = Join-Path ([System.IO.Path]::GetTempPath()) ("PixPin_win_{0}.zip" -f $version)
 try {
     Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $tempFile
     $hash = (Get-FileHash -LiteralPath $tempFile -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -48,10 +49,10 @@ $manifest = [ordered]@{
     )
     checkver = [ordered]@{
         url = $DownloadPage
-        regex = 'id="portable-download-link"[^>]+href="https://download\.pixpin\.cn/PixPin_cn_zh-cn_([\d.]+)\.zip"'
+        regex = 'id="portable-download-link"[^>]+href="https://down(?:load)?\.pixpin\.cn/PixPin_win_(\d+(?:\.\d+)+)\.zip"'
     }
     autoupdate = [ordered]@{
-        url = 'https://download.pixpin.cn/PixPin_cn_zh-cn_$version.zip'
+        url = 'https://download.pixpin.cn/PixPin_win_$version.zip'
     }
 }
 
