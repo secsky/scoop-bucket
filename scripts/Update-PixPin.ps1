@@ -15,7 +15,7 @@ if (-not (Test-Path -LiteralPath $manifestFile)) {
 $response = Invoke-WebRequest -UseBasicParsing -Uri $DownloadPage
 $html = $response.Content
 
-$linkPattern = '<a\b[^>]*\bid="portable-download-link"[^>]*\bhref="(?<url>https://down(?:load)?\.pixpin\.cn/PixPin_win_(?<version>\d+(?:\.\d+)+)\.zip)"'
+$linkPattern = '<a\b[^>]*\bhref="(?<url>https://down(?:load)?\.pixpin\.cn/PixPin_win_(?<version>\d+(?:\.\d+)+)\.zip)"'
 $match = [regex]::Match($html, $linkPattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 
 if (-not $match.Success) {
@@ -49,7 +49,7 @@ $manifest = [ordered]@{
     )
     checkver = [ordered]@{
         url = $DownloadPage
-        regex = 'id="portable-download-link"[^>]+href="https://down(?:load)?\.pixpin\.cn/PixPin_win_(\d+(?:\.\d+)+)\.zip"'
+        regex = 'href="https://down(?:load)?\.pixpin\.cn/PixPin_win_(\d+(?:\.\d+)+)\.zip"'
     }
     autoupdate = [ordered]@{
         url = 'https://download.pixpin.cn/PixPin_win_$version.zip'
