@@ -1,0 +1,64 @@
+{
+  "version": "9.0.10.261117008",
+  "description": "An all-in-one free communication and collaboration platform",
+  "homepage": "https://www.dingtalk.com/",
+  "license": {
+    "identifier": "EULA",
+    "url": "https://tms.dingtalk.com/markets/dingtalk/service-terms-zh"
+  },
+  "architecture": {
+    "64bit": {
+      "url": "https://dtapp-cast.dingtalk.com/dingtalk-desktop/win_x64/vista_later_v2.json#/cast.json"
+    },
+    "32bit": {
+      "url": "https://dtapp-cast.dingtalk.com/dingtalk-desktop/win_x86/vista_later_v2.json#/cast.json"
+    }
+  },
+  "pre_install": [
+    "$ProgressPreference = 'SilentlyContinue'",
+    "$cast = Get-Content \"$dir\\cast.json\" -Raw | ConvertFrom-Json",
+    "$dlUrl = $cast.win.install.url_v2",
+    "$expectedMd5 = $cast.win.install.md5",
+    "$ver = $cast.win.install.version",
+    "if ($cast.win.install.sign -eq '1') {",
+    "    $key = 'win-downloader'",
+    "    $secret = '0CE12A2C-3208-DBF7-7577-5C1C0E09A680'",
+    "    $ttl = '120'",
+    "    $ts = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds().ToString()",
+    "    $raw = \"${dlUrl}_${key}_${secret}_${ts}_${ttl}\"",
+    "    $sha = [System.Security.Cryptography.SHA256]::Create()",
+    "    $sig = ([BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($raw))) -replace '-', '').ToLower()",
+    "    $headers = @{ Url = $dlUrl; Key = $key; TTL = $ttl; Timestamp = $ts; Signature = $sig; 'User-Agent' = \"Downloader/10.0 Dingtalk/$ver\" }",
+    "    $resp = Invoke-RestMethod -Uri 'https://dtupgrade.dingtalk.com/c/u/sign' -Headers $headers -Method Post",
+    "    if ($resp.errCode -ne 0 -or -not $resp.signedUrl) { throw \"Failed to sign DingTalk URL: $($resp | ConvertTo-Json -Compress)\" }",
+    "    $dlUrl = $resp.signedUrl",
+    "}",
+    "Write-Host \"Downloading DingTalk $ver...\"",
+    "Invoke-WebRequest -Uri $dlUrl -OutFile \"$dir\\installer.exe\" -UseBasicParsing",
+    "$actualMd5 = (Get-FileHash -Path \"$dir\\installer.exe\" -Algorithm MD5).Hash.ToLower()",
+    "if ($actualMd5 -ne $expectedMd5.ToLower()) { throw \"MD5 mismatch: expected $expectedMd5, got $actualMd5\" }",
+    "Expand-7zipArchive \"$dir\\installer.exe\" \"$dir\" -Removal",
+    "Move-Item -Path \"$dir\\build\\dist\\*\" -Destination \"$dir\" -Force",
+    "Remove-Item \"$dir\\build\", \"$dir\\setup.xml\", \"$dir\\uninst*\", \"$dir\\cast.json\" -Force -Recurse -ErrorAction SilentlyContinue"
+  ],
+  "shortcuts": [
+    [
+      "Dingtalk.exe",
+      "DingTalk"
+    ]
+  ],
+  "checkver": {
+    "url": "https://dtapp-cast.dingtalk.com/dingtalk-desktop/win_x64/vista_later_v2.json",
+    "regex": "DingTalk_v([\\d.]+)\\.exe"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://dtapp-cast.dingtalk.com/dingtalk-desktop/win_x64/vista_later_v2.json#/cast.json"
+      },
+      "32bit": {
+        "url": "https://dtapp-cast.dingtalk.com/dingtalk-desktop/win_x86/vista_later_v2.json#/cast.json"
+      }
+    }
+  }
+}

@@ -23,6 +23,12 @@ if (-not $match.Success) {
 }
 
 $version = $match.Groups["version"].Value
+$existingManifest = Get-Content -LiteralPath $manifestFile -Raw | ConvertFrom-Json
+if ($existingManifest.version -eq $version) {
+    Write-Host "PixPin is already up to date ($version)."
+    exit 0
+}
+
 # ponytail: use the existing official CDN while down.pixpin.cn has DNS failures.
 $url = $match.Groups["url"].Value.Replace('https://down.pixpin.cn/', 'https://download.pixpin.cn/')
 
