@@ -1,0 +1,95 @@
+name: Update Manifests
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Specific updater name (e.g. Codex, PixPin) or 'all'"
+        required: false
+        default: "all"
+        type: string
+  schedule:
+    - cron: "27 */6 * * *"
+
+concurrency:
+  group: update-manifests
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run manifest updaters
+        id: run-updaters
+        shell: pwsh
+        env:
+          UPDATE_TARGET: ${{ inputs.target || 'all' }}
+        run: |
+          $target = $env:UPDATE_TARGET.Trim()
+          $scripts = Get-ChildItem -LiteralPath ./scripts -Filter 'Update-*.ps1' -File | Sort-Object Name
+          if ($target -and $target -ne 'all') {
+            $scripts = $scripts | Where-Object {
+              $_.BaseName -eq "Update-$target" -or $_.BaseName -eq $target
+            }
+            if (-not $scripts) {
+              throw "No updater script matched target '$target'."
+            }
+          }
+
+          $failed = @()
+          foreach ($script in $scripts) {
+            Write-Host "::group::Running $($script.Name)"
+            try {
+              & $script.FullName
+              if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+                throw "Exited with code $LASTEXITCODE"
+              }
+            }
+            catch {
+              Write-Host "::error file=$($script.FullName)::$($_.Exception.Message)"
+              $failed += $script.Name
+            }
+            finally {
+              Write-Host "::endgroup::"
+            }
+          }
+
+          "failed_count=$($failed.Count)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "failed_list=$($failed -join ', ')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Validate manifests
+        shell: pwsh
+        run: |
+          Get-ChildItem -LiteralPath ./bucket -Filter '*.json' -File | ForEach-Object {
+            Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json | Out-Null
+          }
+
+      - name: Commit and push updates
+        shell: pwsh
+        run: |
+          $changed = @(git status --porcelain -- bucket/ | ForEach-Object { ($_ -split '\s+', 2)[1] })
+          if (-not $changed) {
+            Write-Host "No manifest updates found."
+            exit 0
+          }
+
+          $names = ($changed | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) }) -join ', '
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bucket/
+          git commit -m "Update manifests: $names"
+          git pull --rebase
+          git push
+
+      - name: Fail if any updater failed
+        if: steps.run-updaters.outputs.failed_count != '0'
+        shell: pwsh
+        run: |
+          throw "One or more updaters failed: ${{ steps.run-updaters.outputs.failed_list }}"
