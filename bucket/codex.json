@@ -17,6 +17,8 @@
         }
     },
     "pre_install": [
+        "$msix = Get-ChildItem -LiteralPath $dir -Filter '*.Msix' -File | Select-Object -First 1",
+        "if ($msix) { Expand-7zipArchive $msix.FullName $dir -Removal }",
         "# Decode percent-encoded MSIX ZIP paths (e.g. %40scope -> @scope) so Node/Computer Use modules resolve.",
         "Get-ChildItem -LiteralPath $dir -Recurse -Force | Where-Object { $_.Name -match '%[0-9A-Fa-f]{2}' } | Sort-Object { $_.FullName.Length } -Descending | ForEach-Object {",
         "    $decoded = [System.Uri]::UnescapeDataString($_.Name)",
@@ -123,8 +125,9 @@
         "}",
         "'@",
         "$csPath = Join-Path $dir 'CodexLauncher.cs'",
+        "$exeOut = Join-Path $dir 'Codex.exe'",
         "[System.IO.File]::WriteAllText($csPath, $launcherCs, $utf8NoBom)",
-        "& $csc /nologo /optimize+ /target:winexe /out:(Join-Path $dir 'Codex.exe') /reference:System.Windows.Forms.dll $csPath",
+        "& $csc /nologo /optimize+ /target:winexe \"/out:$exeOut\" /reference:System.Windows.Forms.dll \"$csPath\"",
         "if ($LASTEXITCODE -ne 0) { throw \"csc.exe failed with exit code $LASTEXITCODE\" }",
         "Remove-Item -LiteralPath $csPath -Force -ErrorAction SilentlyContinue"
     ],
