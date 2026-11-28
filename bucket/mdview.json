@@ -1,10 +1,10 @@
 {
-  "version": "2.0.33",
+  "version": "2.0.34",
   "description": "Lightweight Markdown viewer and editor (Community Edition).",
   "homepage": "https://www.mdview.cn/",
   "license": "Freeware",
-  "url": "https://www.mdview.cn/download/mdview-portable-2.0.33.zip",
-  "hash": "b207f74c034702a9a6a08f3bdba861a4d4e8e7c4f76085d3e473b94edf66b81b",
+  "url": "https://www.mdview.cn/download/mdview-portable-2.0.34.zip",
+  "hash": "c95bde6536ee0c2f384f717c941306963352a6d6d516c87bd3e3733ac20b8bdf",
   "pre_install": [
     "$exe = Get-ChildItem -Path \"$dir\" -Filter 'mdview_*.exe' | Select-Object -First 1",
     "if ($exe) { Move-Item -LiteralPath $exe.FullName -Destination \"$dir\\mdview.exe\" -Force }"
